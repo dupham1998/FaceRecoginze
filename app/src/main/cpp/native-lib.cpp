@@ -20,7 +20,7 @@ using namespace dlib;
 using namespace std;
 
 
-dlib::frontal_face_detector detector;
+dlib::frontal_face_detector detector = dlib::frontal_face_detector();
 
 std::vector<int > getfacerect(const std::vector<int>img,int height,int width)
 {
@@ -34,38 +34,32 @@ std::vector<int > getfacerect(const std::vector<int>img,int height,int width)
         for(int j=0;j<width;j++)
         {
             int clr = img[i*width+j];
-            int red = (clr & 0x00ff0000) >> 16;
-            int green = (clr & 0x0000ff00) >> 8;
-            int blue = clr & 0x000000ff;
+            int red = (clr & 0x00ff0000) >> 16; // 取高两位
+            int green = (clr & 0x0000ff00) >> 8; // 取中两位
+            int blue = clr & 0x000000ff; // 取低两位
             unsigned char gray=red*0.299+green*0.587+blue*0.114;
-
+            //dlib::rgb_pixel pt(red,green,blue);
             image[i][j]=gray;
         }
     }
 
-
-
-
-
-    // a LOGD("this time start 3 %f", (float)clock()/CLOCKS_PER_SEC);
     std::vector<dlib::rectangle> dets= detector(image);
-    //  LOGD("this time start 4 %f", (float)clock()/CLOCKS_PER_SEC);
-
-    //   LOGD("this time  end is  %f", (float)clock()/CLOCKS_PER_SEC);
-    std::vector<int>rect;
-
-    rect.push_back(dets.size());
-
-    for(int i = 0; i < dets.size(); i ++){
-        rect.push_back(dets[i].left());
-        rect.push_back(dets[i].top());
-        rect.push_back(dets[i].right());
-        rect.push_back(dets[i].bottom());
 
 
-        LOGD("this is 1 %d %d %d %d", dets[i].left(), dets[i].top(), dets[i].right(), dets[i].bottom());
+    std::vector<int>result;
+
+    if (!dets.empty())
+    {
+        result.push_back(dets.size());
+
+        for(int i = 0;i < dets.size(); i ++){
+            result.push_back(dets[i].left());
+            result.push_back(dets[i].top());
+            result.push_back(dets[i].right());
+            result.push_back(dets[i].bottom());
+        }
     }
-    return rect;
+    return result;
 
 }
 
@@ -81,21 +75,19 @@ extern "C" JNIEXPORT jintArray JNICALL Java_du_com_myapplication_DlibNative_dete
 
 
     LOGD("this time start 1 %f", (float)clock()/CLOCKS_PER_SEC);
-    std::vector<int> image_datacpp(image_height * image_width);
+    std::vector<int>image_datacpp(image_height*image_width);
     jsize len = env->GetArrayLength(image_data);
     jint *body = env->GetIntArrayElements(image_data, 0);
-
     for (jsize i=0;i<len;i++){
         image_datacpp[i]=(int)body[i];
     }
 
+    std::vector<int>rect = getfacerect(image_datacpp,image_height,image_width);
 
-    std::vector<int>rect=getfacerect(image_datacpp,image_height,image_width);
+    int size_int=rect.size();
 
-
-    jintArray result =env->NewIntArray(rect.size());
-    left   
-	
+    jintArray result = env->NewIntArray(size_int);
+    env->SetIntArrayRegion(result, 0, size_int,&rect[0]);
     LOGD("this time start 2 %f", (float)clock()/CLOCKS_PER_SEC);
     return result;
 }

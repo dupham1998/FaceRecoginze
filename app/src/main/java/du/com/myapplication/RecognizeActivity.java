@@ -53,7 +53,7 @@ public class RecognizeActivity extends AppCompatActivity {
             try{
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri).copy(Bitmap.Config.ARGB_8888, true);
 
-                DlibNative.faceRecoginze(bitmap);
+                DlibNative.faceDetect(bitmap);
 
                 imageView.setImageBitmap(bitmap);
             }
